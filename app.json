@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "react-native-exercicio-firebase-navigation",
+    "slug": "react-native-exercicio-firebase-navigation",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
