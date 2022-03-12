@@ -1,10 +1,27 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import InputsButton from '../../components/InputsButton';
+import { useNavigation } from '@react-navigation/native';
+
+import Titulo from '../../components/Titulo';
 
 export default function Login(){
+
+    const navigation = useNavigation();
+
+    function navegaCadastro(){
+        navigation.navigate('Cadastro');
+    }
+
     return(
         <View style={styles.container}>
-            <Text>Login</Text>
+            <Titulo nome="Efetuar Login"/>
+            <InputsButton screen="Login"/>
+            <TouchableOpacity
+            onPress={navegaCadastro}
+            >
+                <Text>Ainda não tem conta? Cadastre-se.</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -14,5 +31,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        padding: 16,
+        marginTop: 40,
     }
 });
