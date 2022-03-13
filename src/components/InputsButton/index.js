@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { auth } from '../../services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
+
 export default function InputsButton( props ){
 
     const [email, setEmail] = useState('');
@@ -40,8 +41,8 @@ export default function InputsButton( props ){
                     setUsuario(userCredencial.user);
                     setEmail('');
                     setSenha('');
-                    //navigation.navigate()
                     Keyboard.dismiss();
+                    navigation.navigate('Home');
                 })
                 .catch( (error) => {
                     verificarErro(error.code);
@@ -55,6 +56,7 @@ export default function InputsButton( props ){
                     setSenha('');
                     alert('Login efetuado');
                     Keyboard.dismiss();
+                    navigation.navigate('Home');
                 })
                 .catch( (error) => {
                     verificarErro(error.code);
@@ -83,6 +85,7 @@ export default function InputsButton( props ){
                         <TextInput
                         value={email}
                         style={styles.input}
+                        keyboardType='email-address'
                         onChangeText={email => setEmail(email)}
                         />
 

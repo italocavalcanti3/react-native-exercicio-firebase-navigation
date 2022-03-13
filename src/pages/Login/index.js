@@ -1,13 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import InputsButton from '../../components/InputsButton';
 import { useNavigation } from '@react-navigation/native';
+
+import { auth } from '../../services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 import Titulo from '../../components/Titulo';
 
 export default function Login(){
 
     const navigation = useNavigation();
+
+    useEffect( () => {
+
+        onAuthStateChanged( auth, (user) => {
+            if (user) {
+                navigation.navigate('Home');
+            }
+        } )
+
+    }, [] );
 
     function navegaCadastro(){
         navigation.navigate('Cadastro');
