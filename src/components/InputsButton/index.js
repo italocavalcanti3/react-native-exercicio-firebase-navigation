@@ -24,6 +24,8 @@ export default function InputsButton( props ){
             alert('Digite um e-mail válido.');
         } else if (error === 'auth/email-already-in-use') {
             alert('E-mail já cadastrado.');
+        } else if (error === 'auth/user-not-found') {
+            alert('Usuário não encontrado.');
         } else {
             alert('Erro ao cadastrar.');
             console.log(error);
@@ -34,34 +36,20 @@ export default function InputsButton( props ){
         setCarregar(true);
         if (email !== '' && senha !== ''){
             
+            const metodo = textoBotao === 'login' ?
+                            signInWithEmailAndPassword(auth, email, senha) :
+                            createUserWithEmailAndPassword(auth, email, senha);
+            metodo.then( (userCredencial) => {
+                setUsuario(userCredencial.user);
+                setEmail('');
+                setSenha('');
+                Keyboard.dismiss();
+                navigation.navigate('Home');
+            } )
+            .catch( (error) => {
+                verificarErro(error.code);
+            });
             
-            if (textoBotao === 'cadastro'){ 
-                createUserWithEmailAndPassword(auth, email, senha)
-                .then( (userCredencial) => {
-                    setUsuario(userCredencial.user);
-                    setEmail('');
-                    setSenha('');
-                    Keyboard.dismiss();
-                    navigation.navigate('Home');
-                })
-                .catch( (error) => {
-                    verificarErro(error.code);
-                });
-                //setCarregar(false);
-            } else {
-                signInWithEmailAndPassword(auth, email, senha)
-                .then( (userCredencial) => {
-                    setUsuario(userCredencial.user);
-                    setEmail('');
-                    setSenha('');
-                    alert('Login efetuado');
-                    Keyboard.dismiss();
-                    navigation.navigate('Home');
-                })
-                .catch( (error) => {
-                    verificarErro(error.code);
-                });
-            }
         } else {
             alert('Preencha os campos corretamente.');
         }
@@ -93,6 +81,7 @@ export default function InputsButton( props ){
                         <TextInput
                         value={senha}
                         style={styles.input}
+                        secureTextEntry={true}
                         onChangeText={senha => setSenha(senha)}
                         />
 
