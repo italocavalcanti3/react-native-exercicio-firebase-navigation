@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Keyboard, ActivityIndicator } from 'react-native';
-
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Keyboard, ActivityIndicator, LogBox } from 'react-native';
+import Loading from '../Loading';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from '../../services/firebase';
+import { auth, db } from '../../services/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { ref, set } from 'firebase/database';
 
+LogBox.ignoreAllLogs();
 
 export default function InputsButton( props ){
 
+    const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
-    const [usuario, setUsuario] = useState({});
     const [carregar, setCarregar] = useState(false);
-
     const navigation = useNavigation();
-
     const textoBotao = props.screen.toLowerCase();
-    
+
     function verificarErro(error){
         if (error === 'auth/weak-password'){
             alert('A senha precisa ter pelo menos 6 caracteres.');
@@ -33,41 +33,68 @@ export default function InputsButton( props ){
     }
 
     async function logarOuCadastrar(){
-        setCarregar(true);
         if (email !== '' && senha !== ''){
             
-            const metodo = textoBotao === 'login' ?
-                            signInWithEmailAndPassword(auth, email, senha) :
-                            createUserWithEmailAndPassword(auth, email, senha);
-            metodo.then( (userCredencial) => {
-                setUsuario(userCredencial.user);
-                setEmail('');
-                setSenha('');
-                Keyboard.dismiss();
-                navigation.navigate('Home');
-            } )
-            .catch( (error) => {
-                verificarErro(error.code);
-            });
-            
+            if (textoBotao === 'cadastro') {
+                setCarregar(true);
+                await createUserWithEmailAndPassword(auth, email, senha)
+                .then( (userCredencial) => {
+                    let user = userCredencial.user;
+                    set( ref(db, 'usuarios/' + user.uid), {
+                        nome: nome,
+                        email: email
+                    });
+                    setNome('');
+                    setEmail('');
+                    setSenha('');
+                    navigation.navigate('Home');
+                })
+                .catch( (error) => {
+                    verificarErro(error.code);
+                });
+                setCarregar(false);
+            } else {
+                setCarregar(true);
+                await signInWithEmailAndPassword(auth, email, senha)
+                .then( (userCredencial) => {
+                    setEmail('');
+                    setSenha('');
+                    Keyboard.dismiss();
+                    navigation.navigate('Home');
+                })
+                .catch( (error) => {
+                    verificarErro(error.code);
+                } );
+                setCarregar(false);  
+            }
+
         } else {
             alert('Preencha os campos corretamente.');
         }
-        setCarregar(false);
     }
 
     return(
         <View style={styles.container}>
 
-            {
-                carregar ?
-                (
-                    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                        <ActivityIndicator color="#d35400" size={50} />
-                    </View>
-                ) :
-                (
                     <View style={styles.area}>
+
+                        {
+                            textoBotao === 'cadastro' ?
+                            (
+                                <View>
+                                <Text style={styles.label}>Nome</Text>
+                                <TextInput
+                                value={nome}
+                                style={styles.input}
+                                autoCapitalize='words'
+                                onChangeText={nome => setNome(nome)}
+                                />
+                                </View>
+                            ) :
+                            (
+                                null
+                                )
+                            }
 
                         <Text style={styles.label}>E-mail</Text>
                         <TextInput
@@ -93,8 +120,7 @@ export default function InputsButton( props ){
                         </TouchableOpacity>
 
                     </View>
-                )
-            }
+            { carregar ? ( <Loading /> ) : (null) }
 
 
         </View>
