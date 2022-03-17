@@ -1,11 +1,11 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
-export default function Tarefa( props ){
+export default function Tarefa( {item, editar} ){
     return(
         <View style={styles.container}>
-            <Text style={styles.tarefa}>{props.item}</Text>
-            <TouchableOpacity style={styles.botao}>
+            <Text style={styles.tarefa}>{item.tarefa}</Text>
+            <TouchableOpacity style={styles.botao} onPress={ () => editar(item.key) }>
                 <Text>Editar</Text>
             </TouchableOpacity>
         </View>

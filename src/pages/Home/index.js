@@ -4,10 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 
 import { auth, db } from '../../services/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { get, onValue, push, ref, set } from 'firebase/database';
+import { get, onValue, push, ref, set, update } from 'firebase/database';
 import Loading from '../../components/Loading';
 import Tarefa from '../../components/Tarefa';
-import { isEmpty } from '@firebase/util';
 
 export default function Home(){
 
@@ -15,7 +14,6 @@ export default function Home(){
     const [loading, setLoading] = useState(false);
     const [usuario, setUsuario] = useState({uid: '', nome: '', email: ''});
     const [tarefa, setTarefa] = useState('');
-    const [idTarefa, setIdTarefa] = useState(0);
     const [lista, setLista] = useState([]);
 
     useEffect( () => {
@@ -27,33 +25,41 @@ export default function Home(){
         });
 
         carregaUsuario();
-        carregaTarefas();
-
+        carregaLista();
 
     }, []);
+
+    async function editarTarefa(item){
+        await onValue(ref(db, `tarefas/${item}`), snapshot => {
+            console.log(snapshot.val());
+            setTarefa(snapshot.val().tarefa);
+        });
+    }
+
+    async function carregaLista(){
+        await onValue(ref(db, 'tarefas'), snapshot => {
+            const data = []
+            snapshot.forEach(snap => {
+                data.push({
+                    key: snap.key,
+                    tarefa: snap.val().tarefa
+                });
+            });
+            setLista(data);
+        })
+    }
 
     async function adicionarTarefa(){
         setLoading(true);
         const dbRef = ref(db, 'tarefas');
         const newDbRef = push(dbRef);
-        await set( newDbRef, {
-            tarefa: tarefa
+        await set( newDbRef, { 
+            tarefa: tarefa,
         });
+        carregaLista();
         setTarefa('');
-        setIdTarefa(idTarefa + 1);
         Keyboard.dismiss();
         setLoading(false);
-    }
-
-    async function carregaTarefas(){        
-        setLista({});
-        await onValue( ref(db, 'tarefas'), snapshot => {
-            const data = [];
-            snapshot.forEach( snap => {
-                data.push(snap.val().tarefa);
-                setLista(data);
-            });
-        });
     }
 
     async function carregaUsuario(){
@@ -88,9 +94,9 @@ export default function Home(){
 
             <View style={styles.viewList}>
                 <FlatList
+                keyExtractor={item => item.key}
                 data={lista}
-                keyExtractor={item => item.idTarefa}
-                renderItem={({item}) => <Tarefa item={item} /> }
+                renderItem={({item}) => <Tarefa item={item} editar={editarTarefa}/> }
                 />
             </View>
 
