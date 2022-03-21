@@ -5,7 +5,7 @@ export default function Tarefa( {item, editar} ){
     return(
         <View style={styles.container}>
             <Text style={styles.tarefa}>{item.tarefa}</Text>
-            <TouchableOpacity style={styles.botao} onPress={ () => editar(item.key) }>
+            <TouchableOpacity style={styles.botao} onPress={ () => editar(item) }>
                 <Text>Editar</Text>
             </TouchableOpacity>
         </View>

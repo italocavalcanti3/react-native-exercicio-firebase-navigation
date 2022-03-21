@@ -26,6 +26,8 @@ export default function InputsButton( props ){
             alert('E-mail já cadastrado.');
         } else if (error === 'auth/user-not-found') {
             alert('Usuário não encontrado.');
+        } else if (error === 'auth/wrong-password') {
+            alert('Usuário ou senha incorretos.');
         } else {
             alert('Erro ao cadastrar.');
             console.log(error);

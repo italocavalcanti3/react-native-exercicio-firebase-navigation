@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Keyboard } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Keyboard, Alert, ToastAndroid } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import { auth, db } from '../../services/firebase';
@@ -10,11 +10,14 @@ import Tarefa from '../../components/Tarefa';
 
 export default function Home(){
 
+    const inputRef = useRef(null);
     const navigation = useNavigation();
     const [loading, setLoading] = useState(false);
     const [usuario, setUsuario] = useState({uid: '', nome: '', email: ''});
     const [tarefa, setTarefa] = useState('');
+    const [idTarefa, setIdTarefa] = useState('');
     const [lista, setLista] = useState([]);
+    const [novaTarefa, setNovaTarefa] = useState({});
 
     useEffect( () => {
 
@@ -30,9 +33,11 @@ export default function Home(){
     }, []);
 
     async function editarTarefa(item){
-        await onValue(ref(db, `tarefas/${item}`), snapshot => {
-            console.log(snapshot.val());
+        await onValue(ref(db, `tarefas/${item.key}`), snapshot => {
+            setIdTarefa(snapshot.key);
             setTarefa(snapshot.val().tarefa);
+            inputRef.current.focus();
+
         });
     }
 
@@ -53,11 +58,19 @@ export default function Home(){
         setLoading(true);
         const dbRef = ref(db, 'tarefas');
         const newDbRef = push(dbRef);
-        await set( newDbRef, { 
-            tarefa: tarefa,
-        });
+        if (idTarefa === ''){
+            await set( newDbRef, { 
+                tarefa: tarefa,
+            });
+        } else {
+            await update(ref(db, `tarefas/${idTarefa}`), {
+                tarefa: tarefa
+            })
+            .catch((error) => console.log(`${error.code - error.message}`));
+        }
         carregaLista();
         setTarefa('');
+        setIdTarefa('');
         Keyboard.dismiss();
         setLoading(false);
     }
@@ -74,6 +87,12 @@ export default function Home(){
         .catch( (error) => {console.log(error.code + ' - ' + error.message)});
     }
 
+    async function deslogar(){
+        await signOut(auth).then(() => {
+            <Loading />
+        }).catch((error) => console.log(`${error.code} - ${error.message}`));
+    }
+
     return(
         <View style={styles.container}>
 
@@ -83,6 +102,7 @@ export default function Home(){
                 value={tarefa}
                 placeholder='Digite uma tarefa'
                 onChangeText={text => setTarefa(text)}
+                ref={inputRef}
                 />
                     <TouchableOpacity
                     style={styles.botaoAdd}
@@ -96,6 +116,7 @@ export default function Home(){
                 <FlatList
                 keyExtractor={item => item.key}
                 data={lista}
+                ListEmptyComponent={() => <Text style={styles.listaVazia}>Crie a sua primeira tarefa...</Text>}
                 renderItem={({item}) => <Tarefa item={item} editar={editarTarefa}/> }
                 />
             </View>
@@ -111,7 +132,7 @@ export default function Home(){
             }
 
             <View style={styles.viewFooter}>
-                <TouchableOpacity style={styles.botaoDeslogar}>
+                <TouchableOpacity style={styles.botaoDeslogar} onPress={deslogar}> 
                     <Text style={styles.textoBotao}>Deslogar</Text>
                 </TouchableOpacity>
             </View>
@@ -154,6 +175,12 @@ const styles = StyleSheet.create({
             backgroundColor: 'red',
             padding: 8,
         },  
+        listaVazia: {
+            textAlign: 'center',
+            fontSize: 18,
+            color: '#4448'
+            
+        },
     viewFooter: {
         padding: 8,
         alignItems: 'center',
