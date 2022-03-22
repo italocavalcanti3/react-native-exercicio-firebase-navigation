@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Keyboard, Alert, ToastAndroid } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import { auth, db } from '../../services/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { get, onValue, push, ref, set, update } from 'firebase/database';
+import { get, onValue, push, ref, set, update, remove } from 'firebase/database';
 import Loading from '../../components/Loading';
 import Tarefa from '../../components/Tarefa';
 
@@ -17,7 +17,6 @@ export default function Home(){
     const [tarefa, setTarefa] = useState('');
     const [idTarefa, setIdTarefa] = useState('');
     const [lista, setLista] = useState([]);
-    const [novaTarefa, setNovaTarefa] = useState({});
 
     useEffect( () => {
 
@@ -37,7 +36,6 @@ export default function Home(){
             setIdTarefa(snapshot.key);
             setTarefa(snapshot.val().tarefa);
             inputRef.current.focus();
-
         });
     }
 
@@ -75,6 +73,10 @@ export default function Home(){
         setLoading(false);
     }
 
+    async function excluirTarefa(item){
+        await remove(ref(db, `tarefas/${item.key}`));
+    }
+
     async function carregaUsuario(){
         await get(ref(db, `usuarios/${auth.currentUser.uid}`))
         .then(snapshot => {
@@ -96,6 +98,7 @@ export default function Home(){
     return(
         <View style={styles.container}>
 
+
             <View style={styles.viewHeader}>
                 <TextInput
                 style={styles.inputTarefa}
@@ -112,12 +115,14 @@ export default function Home(){
                 </TouchableOpacity>
             </View>
 
+            <Text style={{color: '#0009', marginBottom: 8}}>Clique na tarefa caso queira editar.</Text>
+            
             <View style={styles.viewList}>
                 <FlatList
                 keyExtractor={item => item.key}
                 data={lista}
                 ListEmptyComponent={() => <Text style={styles.listaVazia}>Crie a sua primeira tarefa...</Text>}
-                renderItem={({item}) => <Tarefa item={item} editar={editarTarefa}/> }
+                renderItem={({item}) => <Tarefa item={item} editar={editarTarefa} excluir={excluirTarefa}/> }
                 />
             </View>
 
