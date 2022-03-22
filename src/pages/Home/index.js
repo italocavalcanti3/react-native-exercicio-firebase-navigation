@@ -32,15 +32,18 @@ export default function Home(){
     }, []);
 
     async function editarTarefa(item){
-        await onValue(ref(db, `tarefas/${item.key}`), snapshot => {
+        setLoading(true);
+        await onValue(ref(db, `tarefas/${usuario.uid}/${item.key}`), snapshot => {
             setIdTarefa(snapshot.key);
             setTarefa(snapshot.val().tarefa);
             inputRef.current.focus();
         });
+        setLoading(false);
     }
 
     async function carregaLista(){
-        await onValue(ref(db, 'tarefas'), snapshot => {
+        await onValue(ref(db, `/tarefas/${usuario.uid}`), snapshot => {
+            setLoading(true);
             const data = []
             snapshot.forEach(snap => {
                 data.push({
@@ -49,22 +52,27 @@ export default function Home(){
                 });
             });
             setLista(data);
-        })
+        });
+        setLoading(false);
     }
 
     async function adicionarTarefa(){
         setLoading(true);
-        const dbRef = ref(db, 'tarefas');
+        const dbRef = ref(db, `tarefas/${usuario.uid}`);
         const newDbRef = push(dbRef);
-        if (idTarefa === ''){
-            await set( newDbRef, { 
-                tarefa: tarefa,
-            });
+        if (tarefa !== ''){
+            if (idTarefa === ''){
+                await set( newDbRef, { 
+                    tarefa: tarefa,
+                });
+            } else {
+                await update(ref(db, `/tarefas/${usuario.uid}/${idTarefa}`), {
+                    tarefa: tarefa
+                })
+                .catch((error) => console.log(`${error.code - error.message}`));
+            }
         } else {
-            await update(ref(db, `tarefas/${idTarefa}`), {
-                tarefa: tarefa
-            })
-            .catch((error) => console.log(`${error.code - error.message}`));
+            alert('Digite algo para poder salvar');
         }
         carregaLista();
         setTarefa('');
@@ -74,11 +82,14 @@ export default function Home(){
     }
 
     async function excluirTarefa(item){
-        await remove(ref(db, `tarefas/${item.key}`));
+        setLoading(true);
+        await remove(ref(db, `tarefas/${usuario.uid}/${item.key}`));
+        setLoading(false);
     }
 
     async function carregaUsuario(){
-        await get(ref(db, `usuarios/${auth.currentUser.uid}`))
+        setLoading(true);
+        await get(ref(db, `usuarios`))
         .then(snapshot => {
             setUsuario({
                 uid: auth.currentUser.uid,
@@ -87,12 +98,15 @@ export default function Home(){
             });
         })
         .catch( (error) => {console.log(error.code + ' - ' + error.message)});
+        setLoading(false);
     }
 
     async function deslogar(){
+        setLoading(true);
         await signOut(auth).then(() => {
             <Loading />
         }).catch((error) => console.log(`${error.code} - ${error.message}`));
+        setLoading(false);
     }
 
     return(
